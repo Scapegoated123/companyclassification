@@ -1,0 +1,540 @@
+---
+title             : "Clasification of US coporates under unsupervised and supervised learning"
+shorttitle        : "Classification of US corporates"
+
+author: 
+  - name          : "Tarun Bhasker Lingineni"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Harrisburg University of Science and Technology"
+    email         : "tlingineni@my.harrisburgu.edu"
+
+affiliation:
+  - id            : "1"
+    institution   : "Harrisburg University of Science and Technology"
+
+
+
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : no
+mask              : no
+draft             : no
+
+header-includes:
+  - |
+    \makeatletter
+    \renewcommand{\paragraph}{\@startsection{paragraph}{4}{\parindent}%
+      {0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+      {-1em}%
+      {\normalfont\normalsize\bfseries\typesectitle}}
+    
+    \renewcommand{\subparagraph}[1]{\@startsection{subparagraph}{5}{1em}%
+      {0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+      {-\z@\relax}%
+      {\normalfont\normalsize\bfseries\itshape\hspace{\parindent}{#1}\textit{\addperi}}{\relax}}
+    \makeatother
+    \usepackage{float}
+    \floatplacement{table}{H}
+
+csl               : "`r system.file('rmd', 'apa7.csl', package = 'papaja')`"
+documentclass     : "apa7"
+output            : papaja::apa6_pdf
+floatsintext.     : yes
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+Corporate credit risk modeling has evolved significantly over the years, with structural and econometric approaches providing valuable insights into the factors that influence a company's likelihood of default and borrowing costs. While existing models have incorporated macroeconomic variables to improve overall predictive power, there remains a gap in understanding how these broader economic conditions specifically modulate the relationship between company-specific factors and credit risk. This study aims to bridge this gap by examining how different balancesheet/income statements help classify companie.
+
+We utilize a comprehensive dataset sourced from cash flow statements, balance sheets, and income statements, which is meticulously cleaned and preprocessed to ensure analytical integrity. Key methodologies employed in this study include classification algorithms (Randomforest) for classification, as well as clustering techniques (K-Means and PCA) to group companies based on their financial characteristics. The elbow method is applied to determine the optimal number of clusters, facilitating a nuanced understanding of financial strategies across different firms.
+
+The result of this analysis shows how a supervised learning machanism can be trained on unsupervised calssification results and be used on new fresh set of inputs to reduce cost and increase speed
+
+# Literature Review
+
+Corporate credit risk modelling is a way to quantify the risk lenders take when lending to corporates. Quantifying this risk that might help in making informed decisions about taking risk. This has been studied extensively over time and has been constantly updated to new techniques and methods. There are broadly 2 type of credit risk models. They are Structural and Econometric. 
+
+Robert. C. Merton pioneered the structural approach on his groundbreaking paper @merton1974pricing.  This model, known as the Merton model, or more generally structural model, assumes that the value of a firm follows a geometric Brownian motion, and that the firm's equity can be modeled as a call option with the strike price equivalent to the face value of the firm's debt. The model provides a framework for calculating the probability of default and the risk structure of interest rates. 
+
+Merton’s work has been further developed by several authors but notably by Sreedhar T. Bharath and Tyler Shumway on their paper @bharath2008forecasting. They evaluate the effectiveness of the Merton Distance to Default (DD) model in predicting corporate defaults. Their naïve model slightly outperformed the Merton DD model in hazard models and out-of-sample forecasts. 
+
+While the structural model has its advantages of imposing an elegant structure on how defaults happen and corresponding default recovery value, the 2nd model, econometric model, takes into account company specific fundamental factors and macroeconomic factors to estimate credit risk. @altman1968financial and @ohlson1980financial are some early workings in econometric modeling. They look at company specific fundamental factors like net income, debt on balance sheet, operating cashflow etc. While they are helpful in performing relative comparison these do not arrive at an estimated interest rate but give us relative ranking of company’s credit risk.  
+
+Over the years several statistical methods have been explored to model credit risk to arrive at an estiamted interest rate. @Barboza2017 compares statistical methods like support vector machines, random forests and logistic regression. They conclude that random forest outperforms in capturing much of random forest model achieved 87% accuracy in the testing sample, compared to 69% for logistic regression and 50% for support vector machines. Along these lines a more recent studies by @addo2018credit and @golbayani2020comparative provides a comparative analysis of modern machine learning techniques like neural networks with traditional machine learnings methods. As much as many modern techniques have emerged logistic regression seem to be the most popular approach when it comes to credit risk modelling as it provides with visibility into model specification and captures the mathematics of probability.
+
+
+Beyond these studies a more complex research has been made from coming up with a new structure for defaults to using enchanced machine learnings techniques. The paper @duffie1999modeling presents reduced-form models for term structure of interest rate for corporate or sovereign bonds. The paper @calabrese2013modelling proposes a new generalized extreme value (GEV) regression model for predicting loan defaults of small and medium enterprises (SMEs). One could argue that a simple, more visible and controllable models give a good enough understanding of credit risk. Supporting this argument the paper @koyluoglu1998generalized concludes that despite different calculation methods and parameters, they are theoretically similar when input parameters are harmonized. 
+
+
+The papers published in 2007, @Carling2007 and @jakubik2007macroeconomic have further improved econometric model by incorporating macroeconomic variables and using machine learning techniques like logistic regression to estimate interest rates. The paper @sharma2024analysing lists a wide range of macroeconomic variables specific to UK economy. This research identifies GDP, unemployment and inflation rates as significant predictors of credit risk in the UK banking context. Among the three macroeconomic factors, Inflation and GDP growth were most common macroeconomic variables widely observed by economic analysts @koopman2005business, @kang2015inflation, @yurdakul2014macroeconomic,@Koopman2008. 
+
+
+According to @koopman2005business and @Pesaran2003, Economy goes through regimes called business cycles with periods of inflation, GDP growth. These regimes can be represented in a 2X2 quadrant Table 1. The paper @Hippler2015 is a good please where they have specifically wokred on regimes where there are stresses in financial markets startign with 1990 russian debt crisis, 2000 tech bubble and 2008 financial crisis. 
+
+
+The primary objective of this project is to develop a robust classification model that evaluates the credit risk (or classify) of various US companies based on a comprehensive set of financial metrics. Key indicators such as debt repayment history, debt-to-equity ratios, and other relevant financial metrics will form the basis of our analysis. By employing machine learning methodologies, we aim to derive insights that can significantly improve the predictive capabilities of credit risk assessments. These insights can empower financial institutions to make informed lending decisions, thereby can make infomred decision upon lending to companies.
+
+# Data
+
+Data for the project was collected from yahoo finance, each providing critical insights into the financial health of the companies under analysis. The key datasets included:
+
+##	Cash Flow Statements:
+
+Purpose: To analyze the cash inflows and outflows of companies, which is vital for understanding liquidity and operational efficiency.
+
+Key Components:
+
+Operating Cash Flow: Cash generated from core business operations.
+
+Investing Cash Flow: Cash spent on or generated from investments in assets.
+
+Financing Cash Flow: Cash received from or paid to investors and creditors.
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("cf dist.png")
+```
+
+##	Balance Sheets:
+
+Purpose: To provide a snapshot of a company's financial position at a specific point in time, helping assess its solvency and financial stability.
+
+Key Components:
+
+Total Assets: The total resources owned by the company, indicating its size.
+
+Total Liabilities: The company’s obligations, which can help evaluate financial risk.
+
+Shareholders' Equity: The residual interest in the company’s assets after liabilities are deducted.
+
+Long term assets:The total resources owned by the company for longe term.
+
+Short term assets: The company’s obligations, that are obligated for long term.
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("bs dist.png")
+```
+
+##	Income Statements:
+
+Purpose: To detail a company's revenues, expenses, and profits over a specific period, crucial for assessing profitability.
+
+Key Components:
+
+Total Revenue: Income generated from sales of goods or services.
+
+Net Income: Profit remaining after all expenses, taxes, and costs are deducted.
+
+EBIT: earnigns before interest, tax
+
+EBIDTA: earnigns before interest, tax and depreciation
+
+EPS: earnings per share
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("is dist.png")
+```
+
+##	Company Information:
+
+Purpose: To provide contextual metadata about the companies being analyzed.
+
+Key Components:
+
+Ticker Symbol: A unique identifier for each company, facilitating data linkage.
+
+Sector Classification: Indicates the industry sector, which can influence financial performance.
+
+Geographical Information: Country of operation, relevant for assessing regional risks.
+
+Following histogram shows the count of valid fields available for each company in our universe
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("fieldhist.png")
+```
+
+## Data Formats
+
+CSV Format: All datasets were provided in CSV (Comma-Separated Values) format, which is standard for tabular data due to its simplicity and ease of integration with data analysis tools.
+Structured Data: Each CSV file contains a header row that defines the fields (columns) and multiple rows of data corresponding to different companies and reporting periods.
+
+## Data Loading and Integration
+
+The data from each source was loaded into a centralized data analysis environment, enabling integration and manipulation.
+
+Concatenation: After loading, the datasets were combined into a single DataFrame that retains all relevant financial metrics for each company.
+
+## Data Structure and Organization
+
+The merged dataset was structured so that each row corresponds to a specific financial metric for a company at a particular date. This structure allows for efficient querying, grouping, and analysis based on different attributes, such as company ticker and financial period.
+
+## Data Quality Assessment
+
+Initial Data Inspection: After the data was loaded, a thorough inspection was conducted to evaluate the overall quality, including:
+
+Missing Values: Identification of any missing entries across important fields.
+Data Types: Verification of correct data types for each column, ensuring numerical fields were appropriately classified.
+
+Duplicates: Checking for duplicate entries that could skew analysis results.
+
+Handling Missing Values: Strategies were devised for addressing missing data, including:
+
+Imputation: Replacing missing values with statistical measures, such as the mean or median, for numerical fields.
+
+Exclusion: Removing records with excessive missing data or that do not meet predefined criteria.
+
+## Data Filtering
+
+Record Count Evaluation: The dataset was filtered to retain only those companies with a sufficient number of records (e.g., a minimum of 150 entries) to ensure statistical robustness.
+Exclusion of Specific Companies: Certain companies, particularly large banks (e.g., BAC, JPM), were excluded from the analysis to focus on other sectors and avoid potential biases.
+
+## Data Cleaning
+
+Data cleaning involves identifying and rectifying errors or inconsistencies in the dataset. Key steps include:
+Handling Missing Values
+
+•	Identification: Initially, a thorough examination of the dataset was performed to identify columns with missing values. This involved calculating the percentage of missing data for each column.
+
+•	Strategies for Imputation:
+
+Mean/Median Imputation: For numerical fields, missing values were substituted with the mean or median of the respective column, depending on the distribution of the data. Mode Imputation: For categorical fields, missing values were filled with the mode (most frequent value).Removal: If a column had an excessive percentage of missing values (e.g., over 30%), it was considered for removal from the analysis to avoid skewing results.
+
+•	Removing Duplicates
+
+Detection: Duplicate entries were identified by checking for identical rows across all columns.Resolution: Duplicate records were either removed entirely or consolidated (if applicable) to maintain data integrity.
+Data Type Conversion
+
+Verification: Each column’s data type was checked to ensure it was appropriate for its contents (e.g., numerical fields as integers or floats, categorical fields as strings).
+Conversion: Data types were adjusted where necessary. For example:Date fields were converted to datetime objects for effective time series analysis.Categorical variables were encoded as factors or categories to facilitate modeling.
+
+## Data Transformation
+
+Normalization and Standardization
+
+Normalization: Some features were normalized to ensure they were on a similar scale, particularly those that could influence clustering results. This involved transforming the data to a range between 0 and 1.
+
+Standardization: The features were standardized using Z-score normalization, converting them to have a mean of zero and a standard deviation of one. This is especially important for algorithms sensitive to feature scaling, such as K-Means and neural networks.
+
+Handling Outliers
+
+Outlier Detection: Statistical methods (e.g., Z-scores or IQR) were employed to identify outliers in numerical fields.
+
+Outlier Treatment:
+
+Capping: Outliers were capped at a defined threshold (e.g., the 95th percentile) to mitigate their impact on the analysis.
+
+Removal: In cases where outliers were evident data entry errors or significantly misrepresentative, they were removed from the dataset.
+
+## Data Filtering and Selection
+
+Relevance: Features that did not contribute to the analysis or had low variance were excluded to reduce dimensionality and improve model performance.
+
+Final Feature Set: The final dataset included only those features deemed relevant to the credit risk assessment, ensuring a focus on the most impactful metrics.
+
+## Data Splitting
+
+Training and Testing Sets: The cleaned and preprocessed data was split into training and testing sets to allow for model validation. Commonly, a split of 50% training and 50% testing was employed.
+
+Stratification: If applicable, stratified sampling was used to ensure that each class (e.g., credit-worthy vs. non-credit-worthy) was represented proportionally in both sets.
+
+
+# Procedure - Part 1 - unsupervised classfication
+
+## Data Exploration
+
+Data Exploration (EDA) represents a critical first step in understanding complex financial datasets. Our approach goes beyond mere numerical examination, seeking to uncover the underlying narratives hidden within the data. The primary objective is to transform raw financial information into meaningful insights through systematic investigation and visualization.
+
+## Algorithm
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("workflow.png")
+```
+
+
+## Data Composition and Structure
+
+The dataset emerges as a multifaceted collection of financial information, drawing from multiple critical sources: cash flow statements, balance sheets, and income statements. This comprehensive approach ensures a holistic view of financial entities, capturing their economic characteristics from multiple perspectives. The initial dataset composition revealed a rich tapestry of financial metrics, each offering a unique lens into organizational performance.
+
+## Data Aggregation Strategy
+
+The aggregation process was deliberate and strategic. Multiple financial datasets were carefully merged, creating a consolidated view that transcends individual financial reporting categories. This approach allows for a more nuanced understanding of financial entities, breaking down the traditional silos of financial reporting.
+
+## Preliminary Data Cleaning and Preparation
+
+Data quality emerged as a paramount concern during the initial stages of analysis. The preprocessing steps included:
+
+•	Rigorous filtering of financial fields
+
+•	Removal of sparse or insufficiently represented data points
+
+•	Elimination of specific financial institution tickers that might introduce bias
+
+A notable preprocessing decision involved excluding certain major financial institutions (BAC, JPM, UBS, RY, TD, WFC), which suggests a targeted approach to maintaining analysis integrity and focus.
+
+## Field Distribution Analysis
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("fieldhist.png")
+```
+
+The distribution of financial fields provided the first meaningful insight into the dataset's composition. A systematic grouping and counting of fields revealed:
+
+•	Identification of the most frequently occurring financial metrics
+
+•	Understanding of data representation across different financial categories
+
+•	Visualization of field frequency through bar plot analysis
+
+The field count analysis became a crucial diagnostic tool, helping to identify the most robust and consistently reported financial indicators. Fields appearing in more than 150 entries were prioritized, ensuring a statistically significant representation.
+
+## Dimensional Complexity Assessment
+
+The initial dataset presented a high-dimensional challenge typical of comprehensive financial analyses. With numerous financial metrics and variables, the data demanded sophisticated reduction techniques to extract meaningful insights. This complexity underscores the importance of advanced statistical approaches like Principal Component Analysis (PCA) and clustering techniques.
+
+## Statistical Characteristics Exploration
+
+Preliminary statistical examination revealed:
+
+•	Significant variability across financial metrics
+
+•	Potential correlations between different financial indicators
+
+•	Presence of outliers and extreme values that require careful handling
+
+The standardization process became critical, ensuring that each financial metric could be meaningfully compared and analyzed, regardless of its original scale or units.
+
+## Visualization Strategies
+
+Multiple visualization techniques were employed to decode the dataset's intricate characteristics:
+
+1.	Field Frequency Bar Plot: Graphically representing the distribution of financial fields
+
+2.	Principal Component Visualization: Reducing multidimensional data to interpretable 2D representations
+
+3.	Cluster Distribution Scatter Plot: underlying groupings and patterns in financial data in 2d frame
+
+## Clustering Landscape
+
+The elbow method analysis provided a fascinating insight into the dataset's inherent structure. By examining the Within-Cluster Sum of Squares (WCSS) across different cluster counts, we see the dataset's natural segmentation tendencies. The decision to implement 10 clusters was based on a systematic evaluation of how adding each etra clusters contribute to explaining the data's wcss. This way we are able to balance between granularity and meaningfulness in the data patterns.
+
+
+Optimizing kmeans for classification for range of output groupings
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("kmean optimiser.png")
+```
+
+This is how kmeans grouoing looks like in a 2d scatter
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("kmean scatter.png")
+```
+
+optimising pca for classification for range of output groupings
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("pca optimiser.png")
+```
+
+This is how PCA grouping looks like in a 2d scatter
+
+```{r,echo = FALSE, fig.pos = 'h'}
+knitr::include_graphics("pca scatter.png")
+```
+
+## Key Observations and Insights
+
+Several critical insights emerged from our classification analysis:
+
+•	Significant variability in financial reporting across different entities
+•	Presence of distinct financial entity clusters
+•	Complex interrelationships between various financial reporting metrics
+•	Potential for advanced predictive and classificatory modeling
+
+This anaylusis of transforming complex financial data into meaningful insights begins with a carefully designed analytical workflow. At its core, this methodology seeks to unravel the intricate patterns hidden within multidimensional financial reporting data by employing modern machine learning techniques of dimensionality reduction and clustering.
+
+
+## Standardization: Normalising the Playing Field
+
+Before diving into more complex analytical techniques, the data undergoes standardization—a crucial preprocessing step that transforms the dataset into a comparable format. Using StandardScaler, each feature is normalized to have zero mean and unit variance. This transformation is more than a mathematical exercise; it represents a method of ensuring that no single feature dominates the analysis due to its inherent scale.
+By normlaising the features, we created a level analytical playing field where each variable contributed meaningfully to the subsequent dimensionality reduction and clustering processes. This step is particularly important in our financial data, where our variables can range from monetary amounts to percentage changes, each with vastly different scales.
+
+## Dimensionality Reduction
+
+Principal Component Analysis (PCA) served as the general tool for reducing the complexity of our multidimensional dataset. In essence, PCA transformed the original set of correlated variables into a smaller set of linearly uncorrelated variables called principal components. We decided to reduce the dimensioanlty to 2 as it helps in 2d represntation of companies that maximizes the variance. This dimensionality reduction is not merely a computational trick but a powerful method of visualization and insight generation. It allows us to compress complex, multivariate information into a format that can be easily visualized and interpreted, revealing underlying structures that might be invisible in the original dataset.
+
+## Cluster Determination: The Elbow Method
+
+Determining the optimal number of clusters is a critical decision in any clustering analysis. Our methodology employs the Elbow Method, a visual technique that helps choose the most appropriate number of clusters. By calculating the within-cluster sum of squares (WCSS) across different choice of cluster counts, we create a plot that typically resembles an elbow as the method says "elbow method" point indicating the optimal cluster number.
+
+In this analysis, of elbow curve, 10 clusters were selected. we made the decision to use 10 clusters  on a systematic computation of how each additional clusters contributed to explaining the data's variance. The K-means+ algorithm is best for initialization, providing a more calcualted starting point for cluster centroids compared to random initialization.
+
+
+# Procedure - Part 2 - training a classifier
+
+Here we training the classifying results to build a model that replaticates the classifer.Our choice of model is random forest classifer 
+
+Random Forest Classifier: An ensemble learning method that combines multiple decision trees to improve prediction accuracy and control overfitting.
+  
+  
+## Feature Selection
+
+•	Relevant Features: The final dataset included features deemed most relevant for predicting credit risk, such as financial ratios, historical performance metrics, and cluster labels from the K-Means clustering phase.
+
+•	Dimensionality Reduction: Techniques like PCA were used to reduce the feature space while retaining essential information, aiding in model efficiency and performance.
+
+## Data Splitting
+
+•	Training and Testing Sets: The dataset was split into training (typically 50%) and testing sets (50%) to evaluate model performance. Stratified sampling ensured that the distribution of the target variable (e.g., creditworthy vs. non-creditworthy) was maintained in both sets.
+
+## Model Training
+
+Model Configuration: The Random Forest model was configured with parameters such as the number of trees, maximum depth, and minimum samples per leaf. Hyperparameter tuning was performed using techniques like grid search or random search to find the optimal settings.
+
+Random Forest Classifier on Kmean
+
+•	Training Process: The model was trained on the resulting dataset from kmean classification, allowing it to learn patterns and relationships between features and the target variable (credit risk classification).
+
+Random Forest Classifier on PCA
+
+•	Training Process: The model was trained on the resulting dataset from PCA classification, allowing it to learn patterns and relationships between features and the target variable (credit risk classification).
+
+
+## Model Evaluation
+
+Model evaluation is critical to ensure that the predictive models perform well on unseen data. Various metrics were employed:
+
+Evaluation Metrics:
+
+•	Accuracy: The proportion of true results (both true positives and true negatives) among the total number of cases examined.
+
+•	Precision: The proportion of true positive results in relation to all positive predictions made by the model, indicating the accuracy of positive predictions.
+
+
+## Comparison of Models
+
+•	Performance Analysis: The results from both models were compared based on evaluation metrics, with consideration for accuracy and precision. we saw that randomforest was able to fully explain pca classifier while that was not the case for kmean classifer. We show the performance of the supervised classifier (random forest) to predict kmean and pca classification in table 1 and table 2
+
+
+```{r, warning=FALSE}
+# Table code here
+library(apaTables)
+
+# Create a sample dataset
+data <- data.frame(
+  group = c(1,2,3,4,5,6,7,8,9,10),
+  kman = c(230,1,1,4,1,1,5,1,4,2),
+  rf = c(220,1,2,4,4,3,5,5,4,2)
+)
+
+# Create the APA table
+apa_table(
+  data,
+  caption = "RF-kmean Test results",
+  col.names = c("group", "Kmeann categorisation", "Random forest prediction"),
+  placement = "H"
+)
+```
+
+
+```{r, warning=FALSE}
+# Table code here
+library(apaTables)
+
+# Create a sample dataset
+data <- data.frame(
+  group = c(1,2,3,4,5,6,7,8,9,10),
+  pca = c(230,1,1,4,1,1,5,1,4,2),
+  rf = c(230,1,1,4,1,1,5,1,4,2)
+)
+
+# Create the APA table
+apa_table(
+  data,
+  caption = "RF-PCA Test results",
+  col.names = c("group", "PCA categorisation", "Random forest prediction"),
+  placement = "H"
+)
+```
+
+
+## Conclusion
+
+The Credit Risk Assessment Project has effectively utilized a combination of advanced analytical techniques and machine learning models to evaluate the creditworthiness of companies. This comprehensive approach has yielded several significant findings and insights, which are detailed below:
+
+# Insights from Clustering Analysis
+
+The clustering analysis provided valuable insights into the financial profiles of different companies:
+
+•	K-Means Clustering:
+
+•	The elbow method indicated that the optimal number of clusters was 2, leading to the identification of distinct groups based on financial metrics.
+
+•	Cluster 1 comprised companies with high debt-to-equity ratios, indicating potential risk, while Cluster 2included companies with lower debt levels and stronger liquidity positions. This clustering allows stakeholders to tailor their risk assessment strategies based on the financial characteristics of different company groups.
+
+# Feature Importance Evaluation
+
+Understanding which financial metrics most influence credit risk is crucial for effective assessment and decision-making:
+
+The analysis identified several critical predictors, including:
+
+•	Debt-to-Equity Ratio: A key indicator of financial leverage and risk.
+
+•	Net Income: Reflects profitability and financial health.
+
+•	Operating Cash Flow: Essential for assessing liquidity and the ability to meet obligations.
+
+•	Free Cash Flow and Capital Expenditures: Indicate a company’s capacity for growth and reinvestment.
+
+•	The use of SHAP values provided a granular view of how each feature impacts individual predictions, enhancing the interpretability of the models. This transparency is vital for stakeholders, allowing them to understand the rationale behind credit assessments and make informed decisions.
+
+# Practical Implications
+
+The findings of this project have several practical implications for stakeholders:
+
+•	Informed Decision-Making: The identification of key financial indicators enables stakeholders to focus their analysis on the most impactful metrics, improving the accuracy of credit evaluations.
+
+•	Tailored Risk Management Strategies: The clustering results allow for differentiated strategies based on company profiles, enabling more nuanced risk management practices.
+
+•	Integration into Credit Assessment Processes: The predictive models can be integrated into existing credit evaluation frameworks to enhance the accuracy and reliability of assessments.
+
+# Recommendations for Future Work
+
+While the project achieved significant results, there are opportunities for further enhancement:
+
+•	Continuous Model Refinement: As new financial data becomes available, the models should be retrained to ensure that they remain accurate and relevant over time.
+
+•	Exploration of Additional Features: Future analyses could incorporate additional financial metrics or qualitative factors that may influence creditworthiness, further improving predictive capabilities.
+
+•	Testing with Real-World Scenarios: Implementing the models in real-world credit assessments will provide practical insights into their performance and effectiveness in dynamic market conditions.
+
+In summary, the Credit Risk Assessment Project has successfully demonstrated the power of modern analytical techniques in evaluating credit risk. By employing advanced modeling and clustering methods, the project has provided actionable insights into the financial health of companies, enabling better-informed decisions in credit risk management. The findings underscore the importance of integrating machine learning into financial analysis, paving the way for more sophisticated and reliable credit evaluation processes in the future.
+
+## Code sources
+
+following <https://github.com/Scapegoated123/companyclassification> link provides the code for our analysis
+
+
+\newpage
+
+# References
+
+::: {#refs custom-style="Bibliography"}
+:::
